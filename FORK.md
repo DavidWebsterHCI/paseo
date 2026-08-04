@@ -31,19 +31,36 @@ checkout — a script inside the repo would itself become a file upstream could
 touch. It refuses to run with a dirty tree, and stops with instructions if the
 rebase conflicts.
 
-Upstream is very active (~4,700 commits, pushed daily), so expect to run
-`npm install` after a sync — the script reminds you when upstream actually moved.
+Upstream is very active (~4,700 commits, pushed daily), so expect to reinstall
+after a sync — the script reminds you when upstream actually moved.
 
 ## Build
 
 Requires Node **22.20.0** (`.tool-versions`); Node 24 works. npm workspaces, not pnpm.
 
 ```bash
-npm install
+npm ci                # NOT npm install — see below
+npm run build
 npm run dev:server    # daemon on 127.0.0.1:6768
 npm run dev:app       # Expo client on :8081
 npm run dev:desktop   # Electron, picks first free port 8082-8089
 ```
+
+**Use `npm ci`, not `npm install`.** `install` re-resolves optional and peer
+dependencies and rewrites `package-lock.json` even when nothing actually changed
+— roughly 230 lines of churn on a fresh clone here, all optional/peer noise. That
+dirty lockfile then blocks `paseo-update`, which refuses to rebase a dirty tree.
+`npm ci` installs exactly what the lockfile specifies and never modifies it.
+
+A fresh clone needs `npm run build` before the CLI works; `packages/cli/bin/paseo`
+imports `dist/index.js`, which doesn't exist until then.
+
+### Dependency audit
+
+83 advisories at fork time, 7 critical — **all 7 are dev tooling** (vitest,
+`@vitest/browser`, concurrently, shell-quote, tar). Production-only audit
+(`npm audit --omit=dev`) shows no criticals; the notable ones there are a
+picomatch ReDoS and sharp/libvips CVEs. Worth re-checking after each sync.
 
 `PASEO_HOME` holds runtime state (agents, worktrees, sockets, daemon log);
 defaults to `~/.paseo`.
