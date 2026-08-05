@@ -33,9 +33,19 @@ extraResources:
     to: skills
   - from: assets/editor-targets
     to: editor-target-icons
+# Point the auto-updater at this fork, not upstream.
+#
+# Left as getpaseo/paseo, a locally built app checks UPSTREAM for updates and
+# will happily install their binary over this one — silently discarding whatever
+# this fork changed. It only looks safe right now because the local version
+# (0.3.0-beta.1) is ahead of upstream stable (0.2.5) and electron-updater
+# refuses downgrades; the moment upstream ships 0.4.0 the fork gets overwritten.
+#
+# This fork publishes no releases, so the updater simply finds nothing and does
+# nothing — which is the behaviour we want for a locally built app.
 publish:
   provider: github
-  owner: getpaseo
+  owner: DavidWebsterHCI
   repo: paseo
 mac:
   artifactName: "Paseo-${version}-${arch}.${ext}"
